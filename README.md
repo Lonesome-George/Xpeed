@@ -1,2 +1,2 @@
 # Xpeed
-Xpeed Search Engine
+Xpeed based on Lucene-5.3.1
