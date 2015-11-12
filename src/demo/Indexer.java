@@ -19,7 +19,9 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.FSDirectory;
 
+import utils.HtmlParser;
 import utils.JCSimilarity;
+import utils.Page;
 
 /**
  * This class demonstrate the process of creating index with Lucene for text
@@ -79,13 +81,15 @@ public class Indexer {
 			File htmlFile = new File(pathStr);
 			document.add(new StringField("url", urlStr, Field.Store.YES));
 //			document.add(new TextField("contents", new FileReader(htmlFile)));
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(htmlFile)));
-			String content = "";
-			String line = null;
-			while ((line = bufferedReader.readLine()) != null) {
-				content += line;
-			}
-			document.add(new TextField("contents", content, Field.Store.YES));
+//			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(htmlFile)));
+//			String content = "";
+//			String line = null;
+//			while ((line = bufferedReader.readLine()) != null) {
+//				content += line;
+//			}
+			Page page = HtmlParser.parseHtml(pathStr);
+			document.add(new StringField("title", page.getTitle(), Field.Store.YES));
+			document.add(new TextField("content", page.getContent(), Field.Store.YES));
 			indexWriter.addDocument(document);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

@@ -7,5 +7,7 @@
 	<classpathentry kind="lib" path="libs/lucene-queryparser-5.3.1.jar"/>
 	<classpathentry kind="lib" path="libs/lucene-highlighter-5.3.1.jar"/>
 	<classpathentry kind="lib" path="libs/lucene-memory-5.3.1.jar"/>
+	<classpathentry kind="lib" path="libs/htmlparser.jar"/>
+	<classpathentry kind="lib" path="libs/htmllexer.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

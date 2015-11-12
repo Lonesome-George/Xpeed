@@ -89,6 +89,7 @@ public class JCSimilarity extends TFIDFSimilarity {
 	 */
 	@Override
 	public final long encodeNormValue(float f) {
+		System.err.println("encodeNormValue: SmallFloat.floatToByte315(f) = " + SmallFloat.floatToByte315(f));
 		return SmallFloat.floatToByte315(f);
 	}
 
@@ -99,6 +100,7 @@ public class JCSimilarity extends TFIDFSimilarity {
 	 */
 	@Override
 	public final float decodeNormValue(long norm) {
+		System.err.println("decodeNormValue: NORM_TABLE[(int) (norm & 0xFF)] = " + NORM_TABLE[(int) (norm & 0xFF)]);
 		return NORM_TABLE[(int) (norm & 0xFF)]; // & 0xFF maps negative bytes to
 												// positive above 127
 	}
@@ -114,6 +116,7 @@ public class JCSimilarity extends TFIDFSimilarity {
 	 */
 	@Override
 	public float lengthNorm(FieldInvertState state) {
+		System.err.println("lengthNorm");
 		final int numTerms;
 		if (discountOverlaps)
 			numTerms = state.getLength() - state.getNumOverlap();
@@ -125,24 +128,29 @@ public class JCSimilarity extends TFIDFSimilarity {
 	/** Implemented as <code>sqrt(freq)</code>. */
 	@Override
 	public float tf(float freq) {
+		System.err.println("tf: (float) Math.sqrt(freq) = " + (float) Math.sqrt(freq));
 		return (float) Math.sqrt(freq);
 	}
 
 	/** Implemented as <code>1 / (distance + 1)</code>. */
 	@Override
 	public float sloppyFreq(int distance) {
+		System.err.println("sloppyFreq: 1.0f / (distance + 1) = " + 1.0f / (distance + 1));
 		return 1.0f / (distance + 1);
 	}
 
 	/** The default implementation returns <code>1</code> */
 	@Override
 	public float scorePayload(int doc, int start, int end, BytesRef payload) {
+		System.err.println("scorePayload: 1");
 		return 1;
 	}
 
 	/** Implemented as <code>log(numDocs/(docFreq+1)) + 1</code>. */
 	@Override
 	public float idf(long docFreq, long numDocs) {
+		System.err.println("idf: (float) (Math.log(numDocs / (double) (docFreq + 1)) + 1.0) = "
+				+ (float) (Math.log(numDocs / (double) (docFreq + 1)) + 1.0));
 		return (float) (Math.log(numDocs / (double) (docFreq + 1)) + 1.0);
 	}
 
