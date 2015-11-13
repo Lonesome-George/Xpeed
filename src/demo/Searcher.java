@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
+import org.apache.log4j.PropertyConfigurator;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
@@ -25,28 +27,33 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.FSDirectory;
 
+import utils.Constants;
 import utils.JCSimilarity;
 
-class QueryRes {
-	public QueryRes(String url, String title, String content) {
+class QueryDoc {
+	public QueryDoc(String url, String title, String body) {
 		this.url = url;
 		this.title = title;
-		this.content = content;
+		this.body = body;
 	}
 
 	String url;
 	String title;
-	String content;
+	String body;
 }
 
 // 这里这样处理其实不支持并行查询
 public class Searcher {
 
+	private static Logger logger = Logger.getLogger(Searcher.class);
+
 	private String indexDirStr = "D:\\Temp\\luceneIndex";
 
-	Similarity similarity;
-	IndexSearcher searcher;
-	Analyzer analyzer;
+	private Similarity similarity;
+	private IndexSearcher searcher;
+	private Analyzer analyzer;
+	private Query query;
+	private TopDocs topDocs;
 
 	public Searcher() {
 		// This is the directory that hosts the Lucene index
@@ -57,9 +64,10 @@ public class Searcher {
 		}
 
 		try {
-			FSDirectory directory = FSDirectory.open(Paths.get("D:\\Temp\\luceneIndex"));
+			FSDirectory directory = FSDirectory.open(Paths.get(indexDirStr));
 			similarity = new JCSimilarity();
 			searcher = new IndexSearcher(DirectoryReader.open(directory));
+//			searcher.setSimilarity(similarity);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -68,30 +76,18 @@ public class Searcher {
 		analyzer = new SmartChineseAnalyzer(true);
 	}
 
-	// public ScoreDoc[] query(String queryStr, int n) {
-	// Term term = new Term("content", queryStr.toLowerCase());
-	// termQuery = new TermQuery(term);// 这里query构造得不好
-	// try {
-	// TopDocs topDocs = searcher.search(termQuery, n);
-	// return topDocs.scoreDocs;
-	// } catch (IOException e) {
-	// // TODO Auto-generated catch block
-	// e.printStackTrace();
-	// }
-	// return null;
-	// }
-
-	public ArrayList<QueryRes> query(String queryStr, int n) {
-		ArrayList<QueryRes> queryRes = new ArrayList<>();
+	public int query(String queryStr, int n) {
+		String[] fields = { Constants.TITLE, Constants.BODY };
 		try {
-			String[] fields = { "title", "content" };
-			Query query = new MultiFieldQueryParser(fields, analyzer).parse(queryStr);
-			TopDocs topDocs = searcher.search(query, n);
+			query = new MultiFieldQueryParser(fields, analyzer).parse(queryStr);
+			topDocs = searcher.search(query, n);
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 			int length = scoreDocs.length;
+			logger.error("query: " + queryStr);
 			for (int i = 0; i < length; i++) {
-				queryRes.add(fetchRes(query, scoreDocs[i].doc));
+				logger.error("doc" + i + " score: " + scoreDocs[i].score);				
 			}
+			return topDocs.totalHits;
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -99,19 +95,29 @@ public class Searcher {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return queryRes;
+		return 0;
 	}
 
-	public QueryRes fetchRes(Query query, int docID) {
+	public ArrayList<QueryDoc> fetchQueryDocs(int startDocID, int endDocID) {
+		ArrayList<QueryDoc> queryDocs = new ArrayList<>();
+		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+		for (int i = startDocID; i < endDocID; i++) {
+			QueryDoc queryDoc = fetchQueryDoc(query, scoreDocs[i].doc);
+			queryDocs.add(queryDoc);
+		}
+		return queryDocs;
+	}
+
+	public QueryDoc fetchQueryDoc(Query query, int docID) {
 		Document document = fetchDocument(docID);
-		String url = document.get("url");
-		String title = document.get("title");
-		String content = document.get("content");
+		String url = document.get(Constants.URL);
+		String title = document.get(Constants.TITLE);
+		String body = document.get(Constants.BODY);
 
 		try {
-			title = getHighlightHtml(query, analyzer, "title", title, 100);
-			content = getHighlightHtml(query, analyzer, "content", content, 100);
-			return new QueryRes(url, title, content);
+			title = displayHighlightHtml(query, analyzer, Constants.TITLE, title, 100);
+			body = displayHighlightHtml(query, analyzer, Constants.BODY, body, 100);
+			return new QueryDoc(url, title, body);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -132,19 +138,8 @@ public class Searcher {
 		return null;
 	}
 
-	public static void main(String[] args) throws Exception {
-		String queryStr = "java";
-		Searcher searcher = new Searcher();
-		ArrayList<QueryRes> queryRes = searcher.query(queryStr, 10);
-		int length = queryRes.size();
-		for (int i = 0; i < length; i++) {
-			System.out.println(queryRes.get(i).url + '\t');
-			System.out.println(queryRes.get(i).content);
-		}
-	}
-
 	/**
-	 * 获取高亮显示结果的html代码
+	 * 获取高亮显示的html代码
 	 * 
 	 * @param query
 	 *            查询
@@ -152,21 +147,34 @@ public class Searcher {
 	 *            分词器
 	 * @param fieldName
 	 *            域名
-	 * @param fieldContent
-	 *            域内容
+	 * @param text
+	 *            域文本
 	 * @param fragmentSize
 	 *            结果的长度（不含html标签长度）
-	 * @return 结果（一段html代码）
+	 * @return 高亮显示的html代码
 	 * @throws IOException
 	 * @throws InvalidTokenOffsetsException
 	 */
-	static String getHighlightHtml(Query query, Analyzer analyzer, String fieldName, String fieldContent,
-			int fragmentSize) throws IOException, InvalidTokenOffsetsException {
+	static String displayHighlightHtml(Query query, Analyzer analyzer, String fieldName, String text, int fragmentSize)
+			throws IOException, InvalidTokenOffsetsException {
 		// 创建一个高亮器
 		Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter("<font color='red'>", "</font>"),
 				new QueryScorer(query));
 		Fragmenter fragmenter = new SimpleFragmenter(fragmentSize);
 		highlighter.setTextFragmenter(fragmenter);
-		return highlighter.getBestFragment(analyzer, fieldName, fieldContent);
+		return highlighter.getBestFragment(analyzer, fieldName, text);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		PropertyConfigurator.configure("log4j.properties");
+		String queryStr = "java";
+		Searcher searcher = new Searcher();
+		int totalHits = searcher.query(queryStr, 10);
+		ArrayList<QueryDoc> queryDocs = searcher.fetchQueryDocs(0, 10);
+		int length = queryDocs.size();
+		for (int i = 0; i < length; i++) {
+			System.out.println(queryDocs.get(i).url + '\t');
+			System.out.println(queryDocs.get(i).body);
+		}
 	}
 }

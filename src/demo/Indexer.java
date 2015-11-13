@@ -22,6 +22,7 @@ import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.FSDirectory;
 
+import utils.Constants;
 import utils.HtmlParser;
 import utils.JCSimilarity;
 import utils.Page;
@@ -81,11 +82,11 @@ public class Indexer {
 	private void indexHtml(String pathStr, String urlStr) {
 		try {
 			Document document = new Document();
-			document.add(new StringField("url", urlStr, Field.Store.YES));
+			document.add(new StringField(Constants.URL, urlStr, Field.Store.YES));
 //			Page page = HtmlParser.parseHtml(pathStr);
 			Page page = HtmlParser.parseHtml(urlStr, pathStr);
-			document.add(new StringField("title", page.getTitle(), Field.Store.YES));
-			document.add(new TextField("content", page.getBody(), Field.Store.YES));
+			document.add(new StringField(Constants.TITLE, page.getTitle(), Field.Store.YES));
+			document.add(new TextField(Constants.BODY, page.getBody(), Field.Store.YES));
 			indexWriter.addDocument(document);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
