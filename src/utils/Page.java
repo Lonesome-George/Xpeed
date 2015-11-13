@@ -2,9 +2,9 @@ package utils;
 
 public class Page {
 	
-	public Page(String title, String content) {
+	public Page(String title, String body) {
 		this.setTitle(title);
-		this.setContent(content);
+		this.setBody(body);
 	}
 	
 	public String getTitle() {
@@ -14,14 +14,14 @@ public class Page {
 		this.title = title;
 	}
 
-	public String getContent() {
-		return content;
+	public String getBody() {
+		return body;
 	}
 
-	public void setContent(String content) {
-		this.content = content;
+	public void setBody(String body) {
+		this.body = body;
 	}
 
 	private String title;
-	private String content;
+	private String body;
 }
