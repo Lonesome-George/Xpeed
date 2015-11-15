@@ -41,7 +41,7 @@ public class QueryAction extends ActionSupport implements ServletRequestAware {
 //			list = queService.findQuery(query.getQueryWords());
 
 			Searcher searcher = new Searcher();
-			int totalHits = searcher.query(queryWord, 10);
+			int totalHits = searcher.query(queryWord, 100);
 			queryDocs = searcher.fetchQueryDocs(0, 10);
 			
 //			int length = queryDocs.size();
