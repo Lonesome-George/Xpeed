@@ -98,7 +98,7 @@ public class Searcher {
 		ArrayList<QueryDoc> queryDocs = new ArrayList<QueryDoc>();
 		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 		int maxDocID = scoreDocs.length - 1;   // 当前查询结果中最大的文档ID
-		if (scoreDocs.length - 1 < endDocID) { // 当前查询的结果数目不足以显示
+		if (maxDocID < endDocID && topDocs.totalHits > 0) { // 当前查询的结果数目不足以显示
 			try {
 				TopDocs tempTopDocs = searcher.searchAfter(scoreDocs[maxDocID], query, 100);
 				topDocs = TopDocs.merge(topDocs.totalHits, new TopDocs[]{tempTopDocs});
@@ -171,7 +171,7 @@ public class Searcher {
 			throws IOException, InvalidTokenOffsetsException {
 		// 创建一个高亮器
 		Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(
-				"<font color='yellow'>", "</font>"), new QueryScorer(query));
+				"<font color='red'>", "</font>"), new QueryScorer(query));
 		Fragmenter fragmenter = new SimpleFragmenter(fragmentSize);
 		highlighter.setTextFragmenter(fragmenter);
 		String highlightText = highlighter.getBestFragment(analyzer, fieldName, text);
