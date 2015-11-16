@@ -25,28 +25,34 @@ class Html {
 
 public class DataSet {
 
-	// directory that store data
-	private String dataDirStr = "D:\\Temp\\luceneData\\html\\d00000";
-	// dataDir file
-	private File dataDir;
+	// root directory that store data
+	private String rootDirStr = "D:\\Temp\\luceneData\\history";
+	// rootDir File
+	private File rootDir;
+	// dataDir files
+	private File[] dataDirs;
+	// current directory that reading
+	private int curDirId;
 	// file that store the map relationship of pageId and url
 	private String mapFilenameStr = "index";
 	// map file
 	private File mapFile;
-	// current pageId that reading
-	private int curPageId;
 	// to read mapping file
 	private BufferedReader bufferedReader;
 
 	public DataSet() {
-		curPageId = 0;
-		dataDir = new File(dataDirStr);
-		mapFile = new File(dataDir, mapFilenameStr);
+		curDirId = -1;
+		rootDir = new File(rootDirStr);
+		dataDirs = rootDir.listFiles();
 	}
 
+	// 提取网页，一次读一个目录
 	public ArrayList<Html> fecthHtmls() {
+		if (++curDirId > dataDirs.length - 1) return null;
+		
 		ArrayList<Html> htmls = new ArrayList<Html>();
 		try {
+			mapFile = new File(dataDirs[curDirId], mapFilenameStr);
 			bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(mapFile)));
 			String line = null;
 			while (true) {
@@ -70,7 +76,7 @@ public class DataSet {
 		Html html = null;
 		String pageId = "f0" + line.substring(0, 4);
 		pageId = pageId.replace(' ', '0');
-		String pathname = dataDirStr + "\\" + pageId;
+		String pathname = dataDirs[curDirId].getPath() + "\\" + pageId;
 		String urlStr = line.substring(5);
 		html = new Html(urlStr, pathname);
 		return html;

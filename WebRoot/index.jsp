@@ -58,7 +58,7 @@
   	<s:iterator value="queryDocs"  id="queryDoc" >
   	<div class = "results" id = "">
 	 	<h3 class = "">
-	 		<a href="<s:property value="#queryDoc.url"/>"><s:property value="#queryDoc.title"/></a>
+	 		<a href="<s:property value="$queryDoc.url"/>"><s:property value="#queryDoc.title"/></a>
 	 	</h3>
 	 	
 	 	<div class="resu_"><s:property value="#queryDoc.body"/></div>

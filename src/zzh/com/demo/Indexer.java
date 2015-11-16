@@ -1,17 +1,11 @@
 package zzh.com.demo;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -21,6 +15,7 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.search.similarities.TFIDFSimilarity;
 import org.apache.lucene.store.FSDirectory;
+import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import zzh.com.utils.Constants;
 import zzh.com.utils.HtmlParser;
@@ -48,10 +43,11 @@ public class Indexer {
 			dataSet = new DataSet();
 			similarity = new JCSimilarity();
 			
-			Analyzer analyzer = new SmartChineseAnalyzer(true);
+//			Analyzer analyzer = new SmartChineseAnalyzer(true);
+			Analyzer analyzer = new IKAnalyzer();
 			IndexWriterConfig lWriterConfig = new IndexWriterConfig(analyzer);
 			lWriterConfig.setOpenMode(OpenMode.CREATE);
-			lWriterConfig.setSimilarity(similarity);
+//			lWriterConfig.setSimilarity(similarity);
 
 			indexWriter = new IndexWriter(indexDir, lWriterConfig);
 		} catch (IOException e) {
@@ -63,11 +59,13 @@ public class Indexer {
 	public void start() {
 		long startTime = new Date().getTime();
 		try {
-			ArrayList<Html> htmls = dataSet.fecthHtmls();
-			int length = htmls.size();
-			for (int i=0;i<length;i++) {
-				String urlStr = htmls.get(i).url;
-				indexHtml(htmls.get(i).path, urlStr);
+			ArrayList<Html> htmls;
+			while((htmls = dataSet.fecthHtmls()) != null) {
+				int length = htmls.size();
+				for (int i=0;i<length;i++) {
+					String urlStr = htmls.get(i).url;
+					indexHtml(htmls.get(i).path, urlStr);
+				}
 			}
 			indexWriter.close();
 		} catch (IOException e) {
@@ -85,7 +83,9 @@ public class Indexer {
 			document.add(new StringField(Constants.URL, urlStr, Field.Store.YES));
 //			Page page = HtmlParser.parseHtml(pathStr);
 			Page page = HtmlParser.parseHtml(urlStr, pathStr);
-			document.add(new StringField(Constants.TITLE, page.getTitle(), Field.Store.YES));
+			Field titleField = new TextField(Constants.TITLE, page.getTitle(), Field.Store.YES);
+			document.add(titleField);
+			titleField.setBoost(5); // 设置标题的权重
 			document.add(new TextField(Constants.BODY, page.getBody(), Field.Store.YES));
 			indexWriter.addDocument(document);
 		} catch (IOException e) {

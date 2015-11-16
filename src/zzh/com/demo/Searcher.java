@@ -19,6 +19,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TopDocsCollector;
 import org.apache.lucene.search.highlight.Fragmenter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
@@ -27,6 +28,7 @@ import org.apache.lucene.search.highlight.SimpleFragmenter;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.FSDirectory;
+import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import zzh.com.utils.Constants;
 import zzh.com.utils.JCSimilarity;
@@ -63,7 +65,8 @@ public class Searcher {
 			e.printStackTrace();
 		}
 
-		analyzer = new SmartChineseAnalyzer(true);
+//		analyzer = new SmartChineseAnalyzer(true);
+		analyzer = new IKAnalyzer();
 	}
 
 	public int query(String queryStr, int n) {
@@ -71,12 +74,15 @@ public class Searcher {
 		try {
 			query = new MultiFieldQueryParser(fields, analyzer).parse(queryStr);
 			topDocs = searcher.search(query, n);
+			
+			// for logs
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 			int length = scoreDocs.length;
 			logger.error("query: " + queryStr);
 			for (int i = 0; i < length; i++) {
 				logger.error("doc" + i + " score: " + scoreDocs[i].score);
 			}
+			// end
 			return topDocs.totalHits;
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
@@ -91,6 +97,18 @@ public class Searcher {
 	public ArrayList<QueryDoc> fetchQueryDocs(int startDocID, int endDocID) {
 		ArrayList<QueryDoc> queryDocs = new ArrayList<QueryDoc>();
 		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+		int maxDocID = scoreDocs.length - 1;   // 当前查询结果中最大的文档ID
+		if (scoreDocs.length - 1 < endDocID) { // 当前查询的结果数目不足以显示
+			try {
+				TopDocs tempTopDocs = searcher.searchAfter(scoreDocs[maxDocID], query, 100);
+				topDocs = TopDocs.merge(topDocs.totalHits, new TopDocs[]{tempTopDocs});
+				scoreDocs = topDocs.scoreDocs;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		// 返回检索结果
 		int totalHits = topDocs.totalHits;
 		for (int i = startDocID; i < endDocID && i < totalHits; i++) {
 			QueryDoc queryDoc = fetchQueryDoc(query, scoreDocs[i].doc);
@@ -153,21 +171,19 @@ public class Searcher {
 			throws IOException, InvalidTokenOffsetsException {
 		// 创建一个高亮器
 		Highlighter highlighter = new Highlighter(new SimpleHTMLFormatter(
-				"<font color='red'>", "</font>"), new QueryScorer(query));
+				"<font color='yellow'>", "</font>"), new QueryScorer(query));
 		Fragmenter fragmenter = new SimpleFragmenter(fragmentSize);
 		highlighter.setTextFragmenter(fragmenter);
-//		TokenStream tokenStream = analyzer.tokenStream(fieldName, new StringReader(text));
-//		String highlightText = highlighter.getBestFragment(tokenStream, text);
 		String highlightText = highlighter.getBestFragment(analyzer, fieldName, text);
 		return highlightText != null ? highlightText : text;
 	}
 
 	public static void main(String[] args) throws Exception {
 		PropertyConfigurator.configure("log4j.properties");
-		String queryStr = "java";
+		String queryStr = "毛泽东";
 		Searcher searcher = new Searcher();
 		int totalHits = searcher.query(queryStr, 10);
-		ArrayList<QueryDoc> queryDocs = searcher.fetchQueryDocs(0, 10);
+		ArrayList<QueryDoc> queryDocs = searcher.fetchQueryDocs(10, 20);
 		int length = queryDocs.size();
 		for (int i = 0; i < length; i++) {
 			System.out.println(queryDocs.get(i).getUrl() + '\t');
