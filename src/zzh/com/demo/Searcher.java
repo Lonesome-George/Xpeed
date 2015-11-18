@@ -2,15 +2,12 @@ package zzh.com.demo;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
@@ -19,7 +16,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.TopDocsCollector;
 import org.apache.lucene.search.highlight.Fragmenter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
@@ -34,12 +30,11 @@ import zzh.com.utils.Constants;
 import zzh.com.utils.JCSimilarity;
 import zzh.com.utils.QueryDoc;
 
-// 
 public class Searcher {
 
 	private static Logger logger = Logger.getLogger(Searcher.class);
 
-	private String indexDirStr = "D:\\Temp\\luceneIndex";
+	private String indexDirStr = "D:\\Temp\\luceneIndex2";
 
 	private Similarity similarity;
 	private IndexSearcher searcher;
@@ -65,7 +60,7 @@ public class Searcher {
 			e.printStackTrace();
 		}
 
-//		analyzer = new SmartChineseAnalyzer(true);
+		// analyzer = new SmartChineseAnalyzer(true);
 		analyzer = new IKAnalyzer();
 	}
 
@@ -74,7 +69,7 @@ public class Searcher {
 		try {
 			query = new MultiFieldQueryParser(fields, analyzer).parse(queryStr);
 			topDocs = searcher.search(query, n);
-			
+
 			// for logs
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 			int length = scoreDocs.length;
@@ -97,11 +92,14 @@ public class Searcher {
 	public ArrayList<QueryDoc> fetchQueryDocs(int startDocID, int endDocID) {
 		ArrayList<QueryDoc> queryDocs = new ArrayList<QueryDoc>();
 		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-		int maxDocID = scoreDocs.length - 1;   // 当前查询结果中最大的文档ID
+		int maxDocID = scoreDocs.length - 1; // 当前查询结果中最大的文档ID
 		if (maxDocID < endDocID && topDocs.totalHits > 0) { // 当前查询的结果数目不足以显示
 			try {
-				TopDocs tempTopDocs = searcher.searchAfter(scoreDocs[maxDocID], query, 100);
-				topDocs = TopDocs.merge(topDocs.totalHits, new TopDocs[]{tempTopDocs});
+				// TopDocs tempTopDocs =
+				// searcher.searchAfter(scoreDocs[maxDocID], query, 100);
+				// topDocs = TopDocs.merge(topDocs.totalHits, new
+				// TopDocs[]{tempTopDocs});
+				topDocs = searcher.search(query, 2 * endDocID);
 				scoreDocs = topDocs.scoreDocs;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -174,7 +172,8 @@ public class Searcher {
 				"<font color='red'>", "</font>"), new QueryScorer(query));
 		Fragmenter fragmenter = new SimpleFragmenter(fragmentSize);
 		highlighter.setTextFragmenter(fragmenter);
-		String highlightText = highlighter.getBestFragment(analyzer, fieldName, text);
+		String highlightText = highlighter.getBestFragment(analyzer, fieldName,
+				text);
 		return highlightText != null ? highlightText : text;
 	}
 
