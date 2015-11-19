@@ -28,6 +28,7 @@ import zzh.com.utils.Constants;
 import zzh.com.utils.HtmlParser;
 import zzh.com.utils.JCSimilarity;
 import zzh.com.utils.Page;
+import zzh.com.utils.PageExt;
 
 /**
  * This class demonstrate the process of creating index with Lucene for text
@@ -35,7 +36,7 @@ import zzh.com.utils.Page;
  */
 public class Indexer {
 
-	private String indexDirStr = "D:\\Temp\\luceneIndex2";
+	private String indexDirStr;
 
 	private DataSet dataSet;
 	private TFIDFSimilarity similarity;
@@ -44,6 +45,7 @@ public class Indexer {
 	private BloomFilter bloomFilter;
 
 	public Indexer() {
+		indexDirStr = Constants.INDEXDIR;
 		try {
 			// indexDir is the directory that hosts Lucene's index files
 			FSDirectory indexDir = FSDirectory.open(Paths.get(indexDirStr));
@@ -60,7 +62,7 @@ public class Indexer {
 
 			indexWriter = new IndexWriter(indexDir, lWriterConfig);
 
-//			bloomFilter = BloomFilter.getInstance();
+			// bloomFilter = BloomFilter.getInstance();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -103,19 +105,27 @@ public class Indexer {
 			// File htmlFile = new File(pathStr);
 			// Page page = HtmlParser.parseHtml(urlStr, htmlFile);
 			String text = getText(pathStr);
-			Page page = HtmlParser.parseHtml(text);
-			if (page == null)
+			// Page page = HtmlParser.parseHtmlOpt(text);
+			PageExt pageExt = HtmlParser.parseHtmlExt(urlStr, pathStr);
+			if (pageExt == null)
 				return;
-//			if (bloomFilter.contains(page.getBody()))
-//				return;
-//			bloomFilter.add(page.getBody());
-			
-			Field titleField = new TextField(Constants.TITLE, page.getTitle(),
-					Field.Store.YES);
-			document.add(titleField);
-			titleField.setBoost(2); // set boost factor for title
+			// if (bloomFilter.contains(page.getBody()))
+			// return;
+			// bloomFilter.add(page.getBody());
 
-			document.add(new TextField(Constants.BODY, page.getBody(),
+			Field titleField = new TextField(Constants.TITLE,
+					pageExt.getTitle(), Field.Store.YES);
+			document.add(titleField);
+			titleField.setBoost(4); // set boost factor for title
+			Field keywordField = new TextField(Constants.KEYWORDS,
+					pageExt.getKeywords(), Field.Store.YES);
+			keywordField.setBoost(3);
+			document.add(keywordField);
+			Field descField = new TextField(Constants.DESCRIPTION,
+					pageExt.getDescription(), Field.Store.YES);
+			descField.setBoost(2);
+			document.add(descField);
+			document.add(new TextField(Constants.BODY, pageExt.getBody(),
 					Field.Store.YES));
 			indexWriter.addDocument(document);
 		} catch (IOException e) {

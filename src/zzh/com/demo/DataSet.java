@@ -13,6 +13,8 @@ import java.util.ArrayList;
 
 import javax.sound.midi.Track;
 
+import zzh.com.utils.Constants;
+
 class Html {
 	public Html(String url, String path) {
 		this.url = url;
@@ -26,7 +28,7 @@ class Html {
 public class DataSet {
 
 	// root directory that store data
-	private String rootDirStr = "D:\\Temp\\luceneData\\test";
+	private String rootDirStr;
 	// rootDir File
 	private File rootDir;
 	// dataDir files
@@ -42,6 +44,7 @@ public class DataSet {
 
 	public DataSet() {
 		curDirId = -1;
+		rootDirStr = Constants.DATAROOTDIR;
 		rootDir = new File(rootDirStr);
 		dataDirs = rootDir.listFiles();
 	}

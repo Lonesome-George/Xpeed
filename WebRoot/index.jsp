@@ -26,7 +26,7 @@
 	.resu_ana{width:320px;margin-left: 40px;margin-top:20px;display:block;height: 20px;color: #808080;font-size:10px}
 	.container{}
 	.getlist{width:650px;margin-left: 50px;}
-	.results{width: 600px;height:90px;}
+	.results{width: 600px;}
 	/* .pagination li{width:100%;height:38px;line-height:38px;}*/
 	.fenye ul li.cut{color:red;} 
 	.pagination>li.cut>a{background:#337ab7;color:#fff}
@@ -51,7 +51,7 @@
 <s:else>
 	<div class = "resu_ana">
 	找到约  ${totalHits} 条结果
-	<nobr> （用时 0.27 秒）&nbsp;</nobr>
+	<nobr> （用时 ${querySeconds} 秒）&nbsp;</nobr>
 	</div>
 </s:else>
 
@@ -63,8 +63,8 @@
 	<div class= "container"> 		
   	<s:iterator value="queryDocs" status="stat" >
   	<div class = "results" id = "">
-	 	<h3 class = "">
-	 		<a href="${url}" >
+	 	<h4 class = "">
+	 		<a href="${url}" target="_blank">
 	 		<%-- <s:if test="title.length() >20">
 	 			<s:property value = "#title.replaceAll('<[^>]+>','').substring(0,20)" escape="false" />... 
 	 			<s:property value = "title.substring(0,20)"/>...
@@ -73,7 +73,7 @@
 	 		<s:else>
 	 		</s:else>
 	 		</a>
-	 	</h3>	 	
+	 	</h4>	 	
 	 	<div class="resu_">
 	 		<%-- <s:if test="body.replaceAll('<[^>]+>','').length() >100 ">
 	 			<s:property value="#body.replaceAll('<[^>]+>','').substring(0,100)" escape="false" />...
