@@ -18,6 +18,7 @@ import com.opensymphony.xwork2.ActionSupport;
 
 public class QueryAction extends ActionSupport implements ServletRequestAware {
 
+	private int sizePerQuery = 100; // 每次query的查询数目
 	private int pageSize = 10;
 	private int totalPage;
 	private List<QueryDoc> queryDocs = new ArrayList<QueryDoc>();
@@ -34,15 +35,15 @@ public class QueryAction extends ActionSupport implements ServletRequestAware {
 	private double querySeconds;
 
 	public String queDetail() throws Exception {
-		String queryWord = query.getQueryWords();
-		if (!queryWord.equals("")) {
+		queryWords = query.getQueryWords();
+		if (!queryWords.equals("")) {
 			long startTime = new Date().getTime();
 			
 //			 orderService.findAll(orderVOpage, order,flag);
-			System.out.println("query: " + queryWord);
+			System.out.println("query: " + queryWords);
 			Searcher searcher = new Searcher();
-			totalHits = searcher.query(queryWord, 10);
-			queryDocs = searcher.fetchQueryDocs(10, 20);
+			totalHits = searcher.query(queryWords, sizePerQuery);
+//			queryDocs = searcher.fetchQueryDocs(10, 20);
 			totalPage = getTotalPages();
 			System.out.println("totalPage: " + totalPage);
 			int start_id = pageSize*(pageNo-1);

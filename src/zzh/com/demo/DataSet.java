@@ -26,7 +26,7 @@ class Html {
 public class DataSet {
 
 	// root directory that store data
-	private String rootDirStr = "D:\\Temp\\luceneData\\history";
+	private String rootDirStr = "D:\\Temp\\luceneData\\test";
 	// rootDir File
 	private File rootDir;
 	// dataDir files

@@ -68,12 +68,13 @@ public class Searcher {
 		String[] fields = { Constants.TITLE, Constants.BODY };
 		try {
 			query = new MultiFieldQueryParser(fields, analyzer).parse(queryStr);
+			System.out.println("query: " + query.toString());
 			topDocs = searcher.search(query, n);
 
 			// for logs
 			ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 			int length = scoreDocs.length;
-			logger.error("query: " + queryStr);
+			logger.error("query: " + queryStr + "==>" + query.toString());
 			for (int i = 0; i < length; i++) {
 				logger.error("doc" + i + " score: " + scoreDocs[i].score);
 			}
